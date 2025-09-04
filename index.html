@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>secret_request</title>
+    <link rel="stylesheet" href="CSS/stylle.css">
 </head>
 <body>
-    <h1>QUER NAMORAR COMIGO?</h1>
-    <form action="secret_request" method="post">
-        <button type="submit">SIM</button>
-    </form>
-    <form action="secret_request" method="post">
-        <button type="submit">NÃO</button>
-    </form>
+    <div>
+        <h1>QUER NAMORAR COMIGO?</h1>
+    </div>
+    <div>
+        <form action="secret_request" method="post">
+            <button type="submit">SIM</button>
+        </form>
+        <form action="secret_request" method="post">
+            <button type="submit">NÃO</button>
+        </form>
+    </div>
     <script>
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function(event) {
@@ -31,10 +36,21 @@
                 });
             });
         });
-    //ação que faz o botão "Não" ficar se movendo aleatoriamente pela tela quando o mouse se aproxima
-    document.querySelectorAll('form')[1].addEventListener('mouseover', function()
-    {
-        this.style.transform = 'translate(' + Math.random() * 300 + 'px, ' + Math.random() * 300 + 'px)';
+    //ação que faz o botão "Não" ficar se movendo aleatoriamente pela tela quando o mouse se aproxima de forma que de para clica nele depois de algumas tentativas definidas aleatoriamente por um range aleatório e depois de clicar a contagem de tentativas é zerada
+    const noButton = document.querySelectorAll('form')[1].querySelector('button');
+    let attempts = 0;
+    const maxAttempts = Math.floor(Math.random() * 18) + 8; // número aleatório entre 8 e 25
+    noButton.addEventListener('mouseover', function() {
+        if (attempts < maxAttempts) {
+            attempts++;
+            const x = Math.random() * (window.innerWidth - noButton.offsetWidth);
+            const y = Math.random() * (window.innerHeight - noButton.offsetHeight);
+            noButton.style.position = 'absolute';
+            noButton.style.left = `${x}px`;
+            noButton.style.top = `${y}px`;
+        } else {
+            attempts = 0;
+        }
     });
     //botão "sim" que quando clicado abre um pop-up com a localização do restaurante
     document.querySelectorAll('form')[0].addEventListener('submit', function(event)
@@ -42,12 +58,46 @@
         event.preventDefault();
         alert('Vamos ao restaurante X, que fica na Rua Y, número Z. Te espero lá! ❤️');
     });
-    //botão "não" que quando clicado abre um pop-up com uma mensagem engraçada
+    //botão "não" que quando clicado abre um pop-up com uma mensagem engraçada que muda a cada clique nessa ordem
+    const noMessages = [
+        'Acho que você não tem essa opção! 😜',
+        'Não adianta tentar fugir! 😎',
+        'Porque insistir no erro? 😏',
+        'Estranho voce insistir tanto assim 🤔',
+        'Okay, agora voce realmente não tem essa opção mais! 😁'
+    ];
+    let noMessageIndex = 0;
     document.querySelectorAll('form')[1].addEventListener('submit', function(event)
     {
         event.preventDefault();
-        alert('Acho que você não tem essa opção! 😜');
+        alert(noMessages[noMessageIndex]);
+        noMessageIndex = (noMessageIndex + 1) % noMessages.length;
     });
+    //apos clicar no botão não 5 vezez, ele some da tela
+    let noClickCount = 0;
+    document.querySelectorAll('form')[1].addEventListener('submit', function(event)
+    {
+        event.preventDefault();
+        noClickCount++;
+        if (noClickCount >= 5) {
+            noButton.style.display = 'none';
+        }
+    });
+    //enviar notificação para o email eberteclas@gmail.com toda vez que um dos botões for clicado
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const buttonText = this.querySelector('button').innerText;
+            fetch('/send_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ response: buttonText })
+            });
+        });
+    });
+
     </script>
 </body>
 </html>
