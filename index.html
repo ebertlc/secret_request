@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>secret_request</title>
+</head>
+<body>
+    <h1>QUER NAMORAR COMIGO?</h1>
+    <form action="secret_request" method="post">
+        <button type="submit">SIM</button>
+    </form>
+    <form action="secret_request" method="post">
+        <button type="submit">NÃO</button>
+    </form>
+    <script>
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const buttonText = this.querySelector('button').innerText;
+                fetch('/secret_request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ response: buttonText })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                });
+            });
+        });
+    //ação que faz o botão "Não" ficar se movendo aleatoriamente pela tela quando o mouse se aproxima
+    document.querySelectorAll('form')[1].addEventListener('mouseover', function()
+    {
+        this.style.transform = 'translate(' + Math.random() * 300 + 'px, ' + Math.random() * 300 + 'px)';
+    });
+    //botão "sim" que quando clicado abre um pop-up com a localização do restaurante
+    document.querySelectorAll('form')[0].addEventListener('submit', function(event)
+    {
+        event.preventDefault();
+        alert('Vamos ao restaurante X, que fica na Rua Y, número Z. Te espero lá! ❤️');
+    });
+    //botão "não" que quando clicado abre um pop-up com uma mensagem engraçada
+    document.querySelectorAll('form')[1].addEventListener('submit', function(event)
+    {
+        event.preventDefault();
+        alert('Acho que você não tem essa opção! 😜');
+    });
+    </script>
+</body>
+</html>
