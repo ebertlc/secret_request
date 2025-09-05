@@ -19,118 +19,112 @@
         </form>
     </div>
     <script>
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const buttonText = this.querySelector('button').innerText;
-                fetch('/secret_request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ response: buttonText })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                });
-            });
-        });
-    //ação que faz o botão "Não" ficar se movendo aleatoriamente pela tela quando o mouse se aproxima de forma que de para clica nele depois de algumas tentativas definidas aleatoriamente por um range aleatório e depois de clicar a contagem de tentativas é zerada
-    const noButton = document.querySelectorAll('form')[1].querySelector('button');
-    let attempts = 0;
-    const maxAttempts = Math.floor(Math.random() * 18) + 8; // número aleatório entre 8 e 25
-    noButton.addEventListener('mouseover', function() {
-        if (attempts < maxAttempts) {
-            attempts++;
-            const x = Math.random() * (window.innerWidth - noButton.offsetWidth);
-            const y = Math.random() * (window.innerHeight - noButton.offsetHeight);
-            noButton.style.position = 'absolute';
-            noButton.style.left = `${x}px`;
-            noButton.style.top = `${y}px`;
-        } else {
-            attempts = 0;
+        const formularioSim = document.querySelectorAll('form')[0];
+        const formularioNao = document.querySelectorAll('form')[1];
+        const botaoNao = formularioNao.querySelector('button');
+
+        const MAX_TENTATIVAS_MOUSE = Math.floor(Math.random() * 18) + 8; // Entre 8 e 25
+        const MAX_CLIQUES_NAO = 5;
+        const URL_FORMSPREE = 'https://formspree.io/f/mvgbvnpv';
+        const MENSAGENS_BOTAO_NAO = [
+            'Acho que você não tem essa opção! 😜',
+            'Não adianta tentar fugir! 😎',
+            'Por que insistir no erro? 😏',
+            'Estranho você insistir tanto assim 🤔',
+            'Okay, agora você realmente não tem mais essa opção! 😁'
+        ];
+
+        let tentativasMouse = 0;
+        let cliquesBotaoSim = 0;
+        let cliquesBotaoNao = 0;
+        let indiceMensagemNao = 0;
+        let ipPublico = '';
+        let ipLocal = '';
+
+        function moverBotaoNaoAleatoriamente() {
+            if (tentativasMouse < MAX_TENTATIVAS_MOUSE) {
+                tentativasMouse++;
+
+                const x = Math.random() * (window.innerWidth - botaoNao.offsetWidth);
+                const y = Math.random() * (window.innerHeight - botaoNao.offsetHeight);
+
+                botaoNao.style.position = 'absolute';
+                botaoNao.style.left = `${x}px`;
+                botaoNao.style.top = `${y}px`;
+            } else {
+                tentativasMouse = 0;
+            }
         }
-    });
-    //botão "sim" que quando clicado abre um pop-up com a localização do restaurante
-    document.querySelectorAll('form')[0].addEventListener('submit', function(event)
-    {
-        event.preventDefault();
-        alert('Vamos ao restaurante X, que fica na Rua Y, número Z. Te espero lá! ❤️');
-    });
-    //botão "não" que quando clicado abre um pop-up com uma mensagem engraçada que muda a cada clique nessa ordem
-    const noMessages = [
-        'Acho que você não tem essa opção! 😜',
-        'Não adianta tentar fugir! 😎',
-        'Porque insistir no erro? 😏',
-        'Estranho voce insistir tanto assim 🤔',
-        'Okay, agora voce realmente não tem essa opção mais! 😁'
-    ];
-    let noMessageIndex = 0;
-    document.querySelectorAll('form')[1].addEventListener('submit', function(event)
-    {
-        event.preventDefault();
-        alert(noMessages[noMessageIndex]);
-        noMessageIndex = (noMessageIndex + 1) % noMessages.length;
-    });
-    //apos clicar no botão não 5 vezez, ele some da tela
-    let noClickCount = 0;
-    document.querySelectorAll('form')[1].addEventListener('submit', function(event)
-    {
-        event.preventDefault();
-        noClickCount++;
-        if (noClickCount >= 5) {
-            noButton.style.display = 'none';
-        }
-    });
-    //enviar notificação para o email eberteclas@gmail.com toda vez que um dos botões for clicado
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const buttonText = this.querySelector('button').innerText;
-            fetch('/send_email', {
+
+        function enviarAnalise(resposta) {
+            const dados = {
+                respostaFinal: resposta,
+                quantidadeCliquesSim: cliquesBotaoSim,
+                quantidadeCliquesNao: cliquesBotaoNao,
+                ipPublico: ipPublico,
+                ipLocal: ipLocal
+            };
+
+            fetch(URL_FORMSPREE, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ response: buttonText })
+                body: JSON.stringify(dados)
+            }).then(response => {
+                if (response.ok) {
+                    console.log('Dados de análise enviados com sucesso!');
+                } else {
+                    console.error('Falha ao enviar dados de análise.');
+                }
+            }).catch(error => {
+                console.error('Erro na requisição para o Formspree:', error);
             });
+        }
+
+        function obterIPs() {
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    ipPublico = data.ip;
+                })
+                .catch(error => console.error('Erro ao obter IP público:', error));
+
+            fetch('https://geolocation-db.com/json/')
+                .then(response => response.json())
+                .then(data => {
+                    ipLocal = data.IPv4;
+                })
+                .catch(error => console.error('Erro ao obter IP local:', error));
+        }
+
+        botaoNao.addEventListener('mouseover', moverBotaoNaoAleatoriamente);
+
+        formularioSim.addEventListener('submit', function(evento) {
+            evento.preventDefault();
+            cliquesBotaoSim++;
+
+            alert('Vamos ao restaurante X, que fica na Rua Y, número Z. Te espero lá! ❤️');
+
+            enviarAnalise('SIM');
         });
-    });
-    //get user ip na variável user_ip
-    let user_ip = '';
-    fetch('https://api.ipify.org?format=json')
-    .then(response => response.json())
-    .then(data => {
-        user_ip = data.ip;
-    });
-    //armazenar quantas vezes cada botão foi clicado e o ip do usuário e ao clcar no não 5 vezes ou sim 1 vez ao clicar no sim enviar uma notificação via formspree chave https://formspree.io/f/mvgbvnpv com a quantidade de cliques em cada botão e o IP do usuário
-    let simClickCount = 0;
-    let naoClickCount = 0;
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const buttonText = this.querySelector('button').innerText;
-            if (buttonText === 'SIM') {
-                simClickCount++;
-            } else {
-                naoClickCount++;
-            }
-            if (simClickCount >= 1 || naoClickCount >= 5) {
-                fetch('https://formspree.io/f/mvgbvnpv', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        simClicks: simClickCount, 
-                        naoClicks: naoClickCount,
-                        ip:  user_ip
-                    })
-                });
+
+
+        formularioNao.addEventListener('submit', function(evento) {
+            evento.preventDefault();
+            cliquesBotaoNao++;
+
+            alert(MENSAGENS_BOTAO_NAO[indiceMensagemNao]);
+
+            indiceMensagemNao = (indiceMensagemNao + 1) % MENSAGENS_BOTAO_NAO.length;
+
+            if (cliquesBotaoNao >= MAX_CLIQUES_NAO) {
+                botaoNao.style.display = 'none';
+                enviarAnalise('NÃO (após 5 tentativas)');
             }
         });
-    });
+
+        obterIPs();
     </script>
 </body>
 </html>
