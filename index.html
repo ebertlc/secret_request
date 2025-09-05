@@ -97,7 +97,40 @@
             });
         });
     });
-
+    //get user ip na variável user_ip
+    let user_ip = '';
+    fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+        user_ip = data.ip;
+    });
+    //armazenar quantas vezes cada botão foi clicado e o ip do usuário e ao clcar no não 5 vezes ou sim 1 vez ao clicar no sim enviar uma notificação via formspree chave https://formspree.io/f/mvgbvnpv com a quantidade de cliques em cada botão e o IP do usuário
+    let simClickCount = 0;
+    let naoClickCount = 0;
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const buttonText = this.querySelector('button').innerText;
+            if (buttonText === 'SIM') {
+                simClickCount++;
+            } else {
+                naoClickCount++;
+            }
+            if (simClickCount >= 1 || naoClickCount >= 5) {
+                fetch('https://formspree.io/f/mvgbvnpv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        simClicks: simClickCount, 
+                        naoClicks: naoClickCount,
+                        ip:  user_ip
+                    })
+                });
+            }
+        });
+    });
     </script>
 </body>
 </html>
